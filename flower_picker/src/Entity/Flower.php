@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\FlowerRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FlowerRepository::class)]
 class Flower
@@ -14,9 +15,11 @@ class Flower
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
     private ?string $src = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
     private ?string $alt = null;
 
     public function getId(): ?int
