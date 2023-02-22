@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  database:
+    container_name: flower_postgres
+    build:
+      context: ./docker/database
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_MULTIPLE_DATABASES=flower_db,flower_db_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/database/data:/var/lib/postgresql
+      - ./docker/database/init-sql:/docker-entrypoint-initdb.d
+    networks:
+      - flower-picker
+
+  php:
+    container_name: flower_php
+    build:
+      context: ./docker/php
+    depends_on:
+      - database
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/${DATABASE_NAME}?serverVersion=13&charset=utf8"
+    volumes:
+      - ./api:/var/www
+    networks:
+      - flower-picker
+
+  nginx:
+    container_name: flower_nginx
+    build:
+      context: ./docker/nginx
+    volumes:
+      - ./api:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/sites/:/etc/nginx/sites-available
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d
+      - ./logs:/var/log/nginx
+    depends_on:
+      - php
+    ports:
+      - "80:80"
+    networks:
+      - flower-picker
+
+networks:
+  flower-picker:
+    driver: bridge
