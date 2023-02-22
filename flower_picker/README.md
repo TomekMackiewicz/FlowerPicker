@@ -14,6 +14,8 @@ DATABASE_HOST=database
 ```
 docker-compose --env-file ./flower_picker/.env.local up --build
 
+php bin/console doctrine:migrations:migrate
+
 ## Usage
 ```
 docker-compose --env-file ./flower_picker/.env.local up -d

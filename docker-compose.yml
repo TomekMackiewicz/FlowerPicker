@@ -31,7 +31,7 @@ services:
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/${DATABASE_NAME}?serverVersion=13&charset=utf8"
     volumes:
-      - ./api:/var/www
+      - ./flower_picker:/var/www
     networks:
       - flower-picker
 
@@ -40,7 +40,7 @@ services:
     build:
       context: ./docker/nginx
     volumes:
-      - ./api:/var/www
+      - ./flower_picker:/var/www
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./docker/nginx/sites/:/etc/nginx/sites-available
       - ./docker/nginx/conf.d/:/etc/nginx/conf.d
