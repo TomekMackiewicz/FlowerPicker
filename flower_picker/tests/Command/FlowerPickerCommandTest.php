@@ -14,7 +14,6 @@ class FlowerPickerCommandTest extends KernelTestCase
     {
         $kernel = self::bootKernel();
         $application = new Application($kernel);
-
         $command = $application->find('app:flower-picker');
         $commandTester = new CommandTester($command);
         $commandTester->execute([]);
