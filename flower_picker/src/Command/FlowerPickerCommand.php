@@ -10,7 +10,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use App\Service\FlowerPickerService;
 
-// the name of the command is what users type after "php bin/console"
 #[AsCommand(
     name: 'app:flower-picker',
     description: 'Picks three random flowers'
@@ -31,15 +30,16 @@ class FlowerPickerCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $output->writeln(['Downloading flower images...', '============', '']);
         $response = $this->flowerPickerService->fetchWebsiteInformation();
+
+        if (true !== $response) {
+            $output->writeln(['An error occured, see log.err file for more details.', '============', '']);
+            return Command::FAILURE;
+        }
+
+        $output->writeln(['Images succesfully downloaded :)', '============', '']);
+
         return Command::SUCCESS;
-
-        // or return this if some error happened during the execution
-        // (it's equivalent to returning int(1))
-        // return Command::FAILURE;
-
-        // or return this to indicate incorrect command usage; e.g. invalid options
-        // or missing arguments (it's equivalent to returning int(2))
-        // return Command::INVALID
     }
 }
