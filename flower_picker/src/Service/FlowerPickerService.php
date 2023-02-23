@@ -41,6 +41,10 @@ class FlowerPickerService
         $flowersHashes = $this->getFlowersHashes();
         $this->removeDuplicates($flowers, $flowersHashes);
         $randomFlowers = $this->pickRandomFlowers($flowers);
+        if (empty($randomFlowers)) {
+            $this->logger->warning('No more images to import');
+            return false;
+        }
         $imagesSaved = $this->saveImages($randomFlowers);
         if (false === $imagesSaved) {
             return false;
