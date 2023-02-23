@@ -39,6 +39,11 @@ class FlowerRepository extends ServiceEntityRepository
         }
     }
 
+    public function getHash()
+    {
+        return $this->createQueryBuilder('f')->select('f.hash')->getQuery()->getSingleColumnResult();
+    }
+
 //    /**
 //     * @return Flower[] Returns an array of Flower objects
 //     */
