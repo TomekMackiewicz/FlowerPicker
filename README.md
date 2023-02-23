@@ -11,7 +11,7 @@
 APP_ENV=dev
 DATABASE_USER=user
 DATABASE_PASSWORD=pass
-DATABASE_NAME=db
+DATABASE_NAME=flower_db
 DATABASE_HOST=database
 ```
 3. Run ```composer install```
