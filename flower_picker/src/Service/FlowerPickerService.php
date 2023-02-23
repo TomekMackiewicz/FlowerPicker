@@ -72,7 +72,7 @@ class FlowerPickerService
     private function removeDuplicates(array &$flowers, array $flowersHashes): void
     {
         foreach ($flowers as $key => $flower) {
-            if (in_array(md5($flower->getHash()), $flowersHashes)) {
+            if (in_array($flower->getHash(), $flowersHashes)) {
                 unset($flowers[$key]);
             }
         }
@@ -118,7 +118,7 @@ class FlowerPickerService
             $imageExtension = end($imageExtension);
             @$rawImage = file_get_contents($imageUrl);
             if ($rawImage) {
-                file_put_contents(self::IMG_DIRECTORY.'/'.$flower->getAlt().$imageExtension, $rawImage);
+                file_put_contents(self::IMG_DIRECTORY.'/'.$flower->getAlt().'.'.$imageExtension, $rawImage);
             }
         }
     }
