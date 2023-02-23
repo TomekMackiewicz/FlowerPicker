@@ -15,6 +15,7 @@ class FlowerPickerService
 {
     private const NUMBER_OF_IMAGES = 3;
     private const IMG_DIRECTORY = 'images';
+    private const URL = 'https://sklep.swiatkwiatow.pl';
     private $entityManager;
 
     public function __construct(
@@ -52,7 +53,7 @@ class FlowerPickerService
     private function fetchFlowers(): array|bool
     {
         try {
-            $html = $this->client->request('GET', 'https://sklep.swiatkwiatow.pl', []);
+            $html = $this->client->request('GET', self::URL, []);
             $crawler = new Crawler($html->getContent());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
