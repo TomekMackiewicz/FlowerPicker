@@ -1,24 +1,34 @@
 # Flower picker
 
 ## Requirements
-- PHP >=8.1
+1. PHP >=8.1
+2. pgsql driver (if you want to run outside of docker container)
 
 ## Installation
-
-Demo db credentials:
+1. Clone this repository
+2. Add demo db credentials to **.env.local**:
 ```
 DATABASE_USER=user
 DATABASE_PASSWORD=pass
 DATABASE_NAME=db
 DATABASE_HOST=database
 ```
+3. Build docker containers
+```
 docker-compose --env-file ./flower_picker/.env.local up --build
-
+```
+4. Make migrations
+```
 php bin/console doctrine:migrations:migrate
-
-## Usage
+```
+5. Run app
 ```
 docker-compose --env-file ./flower_picker/.env.local up -d
+```
+
+## Usage
+Import flowers by running:
+```
 php bin/console app:flower-picker 
 ```
 
