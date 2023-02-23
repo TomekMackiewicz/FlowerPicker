@@ -12,6 +12,7 @@ use App\Entity\Flower;
 class FlowerPickerService
 {
     private const NUMBER_OF_IMAGES = 3;
+    private const IMG_DIRECTORY = 'images';
     private $entityManager;
 
     public function __construct(
@@ -27,27 +28,23 @@ class FlowerPickerService
         $flowersHashes = $this->getFlowersHashes();
         $this->removeDuplicates($images, $flowersHashes);
         $randomKeys = $this->pickRandomFlowers($images);
+        $flowers = $this->saveImages($randomKeys, $images);
 
-        // Save images
-        $flowers = [];
-        foreach ($randomKeys as $key) {
-            $flower = new Flower();
-            $flower->setSrc($images[$key][0]);
-            $flower->setAlt($images[$key][1]);
-            $flower->setHash(md5($images[$key][0]));
-            $this->entityManager->persist($flower);
-            $flowers[] = $flower;
+        // Upload images
+        if (!file_exists(self::IMG_DIRECTORY)) {
+            mkdir(self::IMG_DIRECTORY, 0755);
         }
-
         foreach ($flowers as $flower) {
             $imageUrl = $flower->getSrc();
+            $imageExtension = explode(".", $imageUrl);
+            $imageExtension = end($imageExtension);
             @$rawImage = file_get_contents($imageUrl);
             if ($rawImage) {
-                file_put_contents($flower->getAlt().'.jpg', $rawImage);
+                file_put_contents(self::IMG_DIRECTORY.'/'.$flower->getAlt().$imageExtension, $rawImage);
             }
         }
 
-        $this->entityManager->flush();
+        //$this->entityManager->flush();
 
         return $images;
     }
@@ -98,7 +95,24 @@ class FlowerPickerService
             array_keys($images) : array_rand($images, self::NUMBER_OF_IMAGES);
     }
 
-    private function saveImages()
+    private function saveImages($randomKeys, $images)
+    {
+        $flowers = [];
+        foreach ($randomKeys as $key) {
+            $flower = new Flower();
+            $flower->setSrc($images[$key][0]);
+            $flower->setAlt($images[$key][1]);
+            $flower->setHash(md5($images[$key][0]));
+            $this->entityManager->persist($flower);
+            $flowers[] = $flower;
+        }
+
+        $this->entityManager->flush();
+
+        return $flowers;
+    }
+
+    private function uploadImages()
     {
 
     }
