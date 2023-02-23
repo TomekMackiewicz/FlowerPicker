@@ -22,47 +22,41 @@ class FlowerPickerService
         $this->entityManager = $doctrine->getManager();
     }
 
-    public function fetchWebsiteInformation(): array
+    public function fetchWebsiteInformation(): bool
     {
-        $images = $this->fetchImages();
+        $flowers = $this->fetchFlowers();
         $flowersHashes = $this->getFlowersHashes();
-        $this->removeDuplicates($images, $flowersHashes);
-        $randomKeys = $this->pickRandomFlowers($images);
-        $flowers = $this->saveImages($randomKeys, $images);
+        $this->removeDuplicates($flowers, $flowersHashes);
+        $randomFlowers = $this->pickRandomFlowers($flowers);
+        $this->saveImages($randomFlowers);
+        $this->uploadImages($randomFlowers);
 
-        // Upload images
-        if (!file_exists(self::IMG_DIRECTORY)) {
-            mkdir(self::IMG_DIRECTORY, 0755);
-        }
-        foreach ($flowers as $flower) {
-            $imageUrl = $flower->getSrc();
-            $imageExtension = explode(".", $imageUrl);
-            $imageExtension = end($imageExtension);
-            @$rawImage = file_get_contents($imageUrl);
-            if ($rawImage) {
-                file_put_contents(self::IMG_DIRECTORY.'/'.$flower->getAlt().$imageExtension, $rawImage);
-            }
-        }
-
-        //$this->entityManager->flush();
-
-        return $images;
+        return true;
     }
 
     /**
      * Fetch images from website
      * @return array
      */
-    private function fetchImages(): array
+    private function fetchFlowers(): array
     {
+        $flowers = [];
         $html = $this->client->request('GET', 'https://sklep.swiatkwiatow.pl', []);
         $crawler = new Crawler($html->getContent());
+        $imageData = $crawler->filterXPath('//img[contains(@class, "primary")]')->extract(['src', 'alt']);
+        foreach ($imageData as $image) {
+            $flower = new Flower();
+            $flower->setSrc($image[0]);
+            $flower->setAlt($image[1]);
+            $flower->setHash(md5($image[0]));
+            $flowers[] = $flower;
+        }
 
-        return $crawler->filterXPath('//img[contains(@class, "primary")]')->extract(['src', 'alt']);
+        return $flowers;
     }
 
     /**
-     * Get downloaded images
+     * Get downloaded images hashes
      * @return array
      */
     private function getFlowersHashes(): array
@@ -72,48 +66,60 @@ class FlowerPickerService
 
     /**
      * Check for duplicated images and remove if any
-     * @param array $images
+     * @param array $flowers
      * @param array $flowersHashes
      */
-    private function removeDuplicates(array &$images, array $flowersHashes): void
+    private function removeDuplicates(array &$flowers, array $flowersHashes): void
     {
-        foreach ($images as $key => $image) {
-            if (in_array(md5($image[0]), $flowersHashes)) {
-                unset($images[$key]);
+        foreach ($flowers as $key => $flower) {
+            if (in_array(md5($flower->getHash()), $flowersHashes)) {
+                unset($flowers[$key]);
             }
         }
     }
 
     /**
      * Pick random flowers
-     * @param array $images
+     * @param array $flowers
      * @return array
      */
-    private function pickRandomFlowers(array $images): array
+    private function pickRandomFlowers(array $flowers): array
     {
-        return count($images) < self::NUMBER_OF_IMAGES ?
-            array_keys($images) : array_rand($images, self::NUMBER_OF_IMAGES);
+        $count = count($flowers) < self::NUMBER_OF_IMAGES ? count($flowers) : self::NUMBER_OF_IMAGES;
+        shuffle($flowers);
+
+        return array_slice($flowers, 0, $count);
     }
 
-    private function saveImages($randomKeys, $images)
+    /**
+     * Save imported images to database
+     * @param array $randomFlowers
+     */
+    private function saveImages(array $randomFlowers): void
     {
-        $flowers = [];
-        foreach ($randomKeys as $key) {
-            $flower = new Flower();
-            $flower->setSrc($images[$key][0]);
-            $flower->setAlt($images[$key][1]);
-            $flower->setHash(md5($images[$key][0]));
+        foreach ($randomFlowers as $flower) {
             $this->entityManager->persist($flower);
-            $flowers[] = $flower;
         }
-
         $this->entityManager->flush();
-
-        return $flowers;
     }
 
-    private function uploadImages()
+    /**
+     * Upload imported images
+     * @param array $randomFlowers
+     */
+    private function uploadImages($randomFlowers): void
     {
-
+        if (!file_exists(self::IMG_DIRECTORY)) {
+            mkdir(self::IMG_DIRECTORY, 0755);
+        }
+        foreach ($randomFlowers as $flower) {
+            $imageUrl = $flower->getSrc();
+            $imageExtension = explode(".", $imageUrl);
+            $imageExtension = end($imageExtension);
+            @$rawImage = file_get_contents($imageUrl);
+            if ($rawImage) {
+                file_put_contents(self::IMG_DIRECTORY.'/'.$flower->getAlt().$imageExtension, $rawImage);
+            }
+        }
     }
 }
