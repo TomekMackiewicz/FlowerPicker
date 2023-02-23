@@ -1,9 +1,5 @@
 # Flower picker
 
-## Requirements
-1. PHP >=8.1
-2. pgsql driver (if you want to run outside of docker container)
-
 ## Installation
 1. Clone this repository
 2. Add demo db credentials to **.env.local**:
