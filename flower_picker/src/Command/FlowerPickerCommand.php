@@ -18,8 +18,6 @@ class FlowerPickerCommand extends Command
 {
     public function __construct(private readonly FlowerPickerService $flowerPickerService)
     {
-        //$this->userManager = $userManager;
-
         parent::__construct();
     }
 
@@ -31,13 +29,13 @@ class FlowerPickerCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln(['Downloading flower images...', '============', '']);
-        $response = $this->flowerPickerService->fetchWebsiteInformation();
-
+        $response = $this->flowerPickerService->importImages();
         if (true !== $response) {
-            $output->writeln(['An error occured, see var/log/log.err file for more details.', '============', '']);
+            $output->writeln(
+                ['An error occured, see var/log/log.err file for more details.', '============', '']
+            );
             return Command::FAILURE;
         }
-
         $output->writeln(['Images succesfully downloaded :)', '============', '']);
 
         return Command::SUCCESS;

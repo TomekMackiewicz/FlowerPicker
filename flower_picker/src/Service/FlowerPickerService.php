@@ -26,7 +26,11 @@ class FlowerPickerService
         $this->entityManager = $doctrine->getManager();
     }
 
-    public function fetchWebsiteInformation(): bool
+    /**
+     * Import images
+     * @return bool
+     */
+    public function importImages(): bool
     {
         $imageData = $this->fetchFlowers();
         if (empty($imageData)) {
@@ -68,7 +72,7 @@ class FlowerPickerService
      * @param array $imageData
      * @return array
      */
-    private function prepareFlowersObjects($imageData): array
+    private function prepareFlowersObjects(array $imageData): array
     {
         $flowers = [];
         foreach ($imageData as $image) {
@@ -145,7 +149,7 @@ class FlowerPickerService
      * Upload imported images
      * @param array $randomFlowers
      */
-    private function uploadImages($randomFlowers): void
+    private function uploadImages(array $randomFlowers): void
     {
         if (!file_exists(self::IMG_DIRECTORY)) {
             mkdir(self::IMG_DIRECTORY, 0755);
