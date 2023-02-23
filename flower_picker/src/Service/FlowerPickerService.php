@@ -7,6 +7,8 @@ namespace App\Service;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
+use Doctrine\DBAL\Exception as DBALException;
 use App\Entity\Flower;
 
 class FlowerPickerService
@@ -17,18 +19,27 @@ class FlowerPickerService
 
     public function __construct(
         private readonly HttpClientInterface $client,
-        private readonly ManagerRegistry $doctrine
+        private readonly ManagerRegistry $doctrine,
+        private readonly LoggerInterface $logger
     ) {
         $this->entityManager = $doctrine->getManager();
     }
 
     public function fetchWebsiteInformation(): bool
     {
-        $flowers = $this->fetchFlowers();
+        $imageData = $this->fetchFlowers();
+        if (empty($imageData)) {
+            $this->logger->warning('No images to import');
+            return false;
+        }
+        $flowers = $this->prepareFlowersObjects($imageData);
         $flowersHashes = $this->getFlowersHashes();
         $this->removeDuplicates($flowers, $flowersHashes);
         $randomFlowers = $this->pickRandomFlowers($flowers);
-        $this->saveImages($randomFlowers);
+        $imagesSaved = $this->saveImages($randomFlowers);
+        if (false === $imagesSaved) {
+            return false;
+        }
         $this->uploadImages($randomFlowers);
 
         return true;
@@ -36,14 +47,29 @@ class FlowerPickerService
 
     /**
      * Fetch images from website
+     * @return array|bool
+     */
+    private function fetchFlowers(): array|bool
+    {
+        try {
+            $html = $this->client->request('GET', 'https://sklep.swiatkwiatow.pl', []);
+            $crawler = new Crawler($html->getContent());
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            return false;
+        }
+
+        return $crawler->filterXPath('//img[contains(@class, "primary")]')->extract(['src', 'alt']);
+    }
+
+    /**
+     * Prepare list of flowers objects
+     * @param array $imageData
      * @return array
      */
-    private function fetchFlowers(): array
+    private function prepareFlowersObjects($imageData): array
     {
         $flowers = [];
-        $html = $this->client->request('GET', 'https://sklep.swiatkwiatow.pl', []);
-        $crawler = new Crawler($html->getContent());
-        $imageData = $crawler->filterXPath('//img[contains(@class, "primary")]')->extract(['src', 'alt']);
         foreach ($imageData as $image) {
             $flower = new Flower();
             $flower->setSrc($image[0]);
@@ -94,13 +120,24 @@ class FlowerPickerService
     /**
      * Save imported images to database
      * @param array $randomFlowers
+     * @return bool
      */
-    private function saveImages(array $randomFlowers): void
+    private function saveImages(array $randomFlowers): bool
     {
-        foreach ($randomFlowers as $flower) {
-            $this->entityManager->persist($flower);
+        try {
+            foreach ($randomFlowers as $flower) {
+                $this->entityManager->persist($flower);
+            }
+            $this->entityManager->flush();
+        } catch (DBALException $e) {
+            $this->logger->error($e->getMessage());
+            return false;
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            return false;
         }
-        $this->entityManager->flush();
+
+        return true;
     }
 
     /**

@@ -22,3 +22,6 @@ services:
 
     Symfony\Component\HttpClient\CurlHttpClient: ~
     Symfony\Component\HttpClient\HttpClientInterface: '@Symfony\Component\HttpClient\CurlHttpClient'
+
+    Monolog\Logger: ~
+    Monolog\LoggerInterface: '@Monolog\Logger'

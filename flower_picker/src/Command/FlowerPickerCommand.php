@@ -34,7 +34,7 @@ class FlowerPickerCommand extends Command
         $response = $this->flowerPickerService->fetchWebsiteInformation();
 
         if (true !== $response) {
-            $output->writeln(['An error occured, see log.err file for more details.', '============', '']);
+            $output->writeln(['An error occured, see var/log/log.err file for more details.', '============', '']);
             return Command::FAILURE;
         }
 
