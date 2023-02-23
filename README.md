@@ -8,20 +8,23 @@
 1. Clone this repository
 2. Add demo db credentials to **.env.local**:
 ```
+APP_ENV=dev
 DATABASE_USER=user
 DATABASE_PASSWORD=pass
 DATABASE_NAME=db
 DATABASE_HOST=database
 ```
-3. Build docker containers
+3. Run ```composer install```
+
+4. Build docker containers
 ```
 docker-compose --env-file ./flower_picker/.env.local up --build
 ```
-4. Make migrations
+5. Make migrations
 ```
 php bin/console doctrine:migrations:migrate
 ```
-5. Run app
+6. Run app
 ```
 docker-compose --env-file ./flower_picker/.env.local up -d
 ```
